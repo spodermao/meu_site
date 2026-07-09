@@ -769,14 +769,14 @@ function updComp(){
 W.$('rA').addEventListener('change',updComp);
 W.$('rNum').addEventListener('input',updComp);
 
-W.$('btnRsvp').addEventListener('click', async function(){
+W.$('btnRsvp').addEventListener('click', function(){
   var name=W.$('rN').value.trim(), att=W.$('rA').value, num=parseInt(W.$('rNum').value)||1;
   if(!name||!att){ W.toast('Preencha nome e confirmação.'); return; }
   var comps=[];
   if(att==='s'&&num>1){ for(var i=1;i<num;i++){ var el=W.$('rC'+i); comps.push(el?el.value.trim():''); } }
   var r={ id: Date.now().toString(36)+Math.random().toString(36).slice(2,5), name:name, att:att, num:att==='s'?num:0, companions:comps, ts:Date.now() };
   D.rsvps.push(r);
-  await dbAddRsvp(r);
+  dbAddRsvp(r);
   W.$('rN').value=''; W.$('rA').value=''; W.$('rNum').value=1;
   W.$('rNG').style.display='none'; W.$('rCompanions').innerHTML='';
   renderRSVPs();
@@ -916,12 +916,12 @@ function openModal(id){
       +'<button class="btn-main" id="btnResQ">Confirmar reserva</button>';
     W.$('qMinus').addEventListener('click',function(){ qVal=Math.max(1,qVal-1); W.$('qV').textContent=qVal; });
     W.$('qPlus').addEventListener('click',function(){ qVal=Math.min(qMax,qVal+1); W.$('qV').textContent=qVal; });
-    W.$('btnResQ').addEventListener('click', async function(){
+    W.$('btnResQ').addEventListener('click', function(){
       var name=W.$('mN').value.trim(); if(!name){ W.toast('Informe seu nome.'); return; }
       g.taken=(g.taken||0)+qVal;
       if(!g.reservations)g.reservations=[];
       g.reservations.push({name:name,qty:qVal,ts:Date.now()});
-      await dbUpdateGift(g);
+      dbUpdateGift(g);
       renderGifts(); W.$('ovModal').classList.remove('open');
       W.toast(qVal+' cota(s) reservada(s)! 🎉');
     });
@@ -930,10 +930,10 @@ function openModal(id){
       +(g.type==='url'?'<p style="font-size:12px;color:var(--mid);margin-bottom:10px">Após comprar, volte aqui para registrar.</p>':'')
       +'<div class="fg"><label>Seu nome</label><input id="mN" type="text" placeholder="Como quer ser identificado(a)"></div>'
       +'<button class="btn-main" id="btnResG">Confirmar reserva</button>';
-    W.$('btnResG').addEventListener('click', async function(){
+    W.$('btnResG').addEventListener('click', function(){
       var name=W.$('mN').value.trim(); if(!name){ W.toast('Informe seu nome.'); return; }
       g.reservedBy=name; g.reservedTs=Date.now();
-      await dbUpdateGift(g);
+      dbUpdateGift(g);
       renderGifts(); W.$('ovModal').classList.remove('open');
       W.toast('Presente reservado! 🎉');
     });
@@ -995,6 +995,7 @@ W.togType = function(){
 };
 
 // ── FETCH PRODUCT ──
+var prev={};
 function doFetch(url,slot,btnId,pvId,errId,imgId,titId,prcId){
   if(!url){ W.toast('Cole um link primeiro.'); return; }
   var btn=W.$(btnId); btn.textContent='…'; btn.disabled=true;
@@ -1079,7 +1080,7 @@ W.$('gImgClear').addEventListener('click',function(e){
 });
 
 // ── ADD GIFT ──
-W.$('btnAddGift').addEventListener('click', async function(){
+W.$('btnAddGift').addEventListener('click', function(){
   var type=document.querySelector('input[name="gt"]:checked').value;
   var title=W.$('gTit').value.trim();
   if(!title){ W.toast('Informe o título.'); return; }
@@ -1102,7 +1103,7 @@ W.$('btnAddGift').addEventListener('click', async function(){
   addBtn.disabled=true; addBtn.textContent='✓ Salvando…'; addBtn.style.background='var(--sage-d)';
 
   D.gifts.push(g);
-  await dbAddGift(g);
+  dbAddGift(g);
   renderGifts(); renderFilters(); renderAdminList();
 
   setTimeout(function(){
@@ -1129,24 +1130,24 @@ function renderAdminList(){
       +'<button class="bdel" data-did="'+g.id+'">Remover</button></div>';
   }).join('');
   el.querySelectorAll('.bdel').forEach(function(b){
-    b.addEventListener('click', async function(){
+    b.addEventListener('click', function(){
       if(!confirm('Remover este presente?'))return;
       D.gifts=D.gifts.filter(function(g){ return g && g.id!==b.dataset.did; });
-      await dbDeleteGift(b.dataset.did);
+      dbDeleteGift(b.dataset.did);
       renderGifts(); renderFilters(); renderAdminList(); initPriceSlider();
     });
   });
 }
 
 // ── SAVE CONFIG ──
-W.$('btnSaveCfg').addEventListener('click', async function(){
+W.$('btnSaveCfg').addEventListener('click', function(){
   var c=D.cfg;
   c.n1=W.$('cN1').value.trim(); c.n2=W.$('cN2').value.trim(); c.date=W.$('cDate').value;
   c.time=W.$('cTime').value.trim(); c.venue=W.$('cVenue').value.trim(); c.addr=W.$('cAddr').value.trim();
   c.mapUrl=W.$('cMap').value.trim(); c.dress=W.$('cDress').value.trim(); c.msg=W.$('cMsg').value.trim();
   c.spotifyUrl=W.$('cSpotify').value.trim()||c.spotifyUrl;
   var np=W.$('cPass').value; if(np)c.pass=np;
-  await dbSaveCfg();
+  dbSaveCfg();
   applyConfig(); startCD();
   W.toast('Configurações salvas! ✓');
 });
@@ -1161,13 +1162,11 @@ W.$('fileIn').addEventListener('change',function(e){
 function setHeroPh(src){ var img=W.$('phImg'); img.src=src; img.style.display='block'; W.$('phPh').style.display='none'; }
 
 // ── INIT ──
-async function init(){
-  await dbLoadAll();
-  W.$('dbLoading').classList.add('done');
-
+function init(){
+  // 1. Renderiza o site imediatamente com as configurações locais padrão
   refreshAuthUI();
   applyConfig();
-
+  
   var sGifts = W.$('sGifts');
   if(sGifts) {
     sGifts.querySelectorAll('[data-s]').forEach(function(b){
@@ -1179,11 +1178,29 @@ async function init(){
     sortOrder.addEventListener('change',function(){ gState.sort=this.value; renderGifts(); });
   }
   initPriceSlider();
-
   renderFilters(); renderGifts(); renderRSVPs(); startCD();
 
   var ph=loadPh(); if(ph)setHeroPh(ph);
   if(W.adm) W.$('btnAdm').textContent='Painel';
+
+  // 2. Remove a tela de carregamento IMEDIATAMENTE para que a página nunca congele
+  var loader = W.$('dbLoading');
+  if(loader) loader.classList.add('done');
+
+  // 3. Dispara a consulta ao banco de dados em segundo plano (Assíncrono sem travar a UI)
+  if(sb) {
+    dbLoadAll().then(function(){
+      // Re-renderiza com os dados atualizados vindos da nuvem caso a requisição termine com sucesso
+      applyConfig();
+      initPriceSlider();
+      renderFilters();
+      renderGifts();
+      renderRSVPs();
+      startCD();
+    }).catch(function(e){
+      console.error("Erro na busca em segundo plano do Supabase:", e);
+    });
+  }
 }
 
 init();
