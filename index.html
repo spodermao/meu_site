@@ -562,15 +562,22 @@ footer small{font-size:11px;opacity:.6}
 // ⚙️  CREDENCIAIS SUPABASE — IMPORTANTE: Cole apenas a URL limpa base
 // Exemplo correto: "https://seuid.supabase.co" (Sem rest/v1 ou barras extras)
 // =====================================================================
-const SUPABASE_URL = "SUA_URL_AQUI";
-const SUPABASE_KEY = "SUA_KEY_AQUI";
+const SUPABASE_URL = "https://wrwjjlkpbhxdqwfdcssw.supabase.co/rest/v1/";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indyd2pqbGtwYmh4ZHF3ZmRjc3N3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM1NzQzMzYsImV4cCI6MjA5OTE1MDMzNn0.rVN6IooOID10fileR2jTla5J6f2Bbm0RZNFar4fNGsA";
 // =====================================================================
 
 (function(){
 'use strict';
 
-// ── SUPABASE CLIENT ──
-const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+// ── BLINDAGEM DE INICIALIZAÇÃO DO CLIENTE ──
+let sb = null;
+try {
+  if (SUPABASE_URL && SUPABASE_URL !== "SUA_URL_AQUI" && SUPABASE_URL.startsWith("http")) {
+    sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  }
+} catch (err) {
+  console.error("Erro ao inicializar o cliente Supabase:", err);
+}
 
 // ── DADOS PADRÃO NATIVOS FIXADOS (Fallback local e inicialização) ──
 const DEFAULT_CFG = {
@@ -653,8 +660,9 @@ W.$('lP').addEventListener('keydown', function(e){ if(e.key==='Enter') W.doLogin
 
 // ── SUPABASE DATA LAYER ──
 async function dbLoadAll(){
+  if (!sb) return;
   try {
-    var { data: cfgRows, error: cfgErr } = await sb.from('configuracoes').select('dados').eq('id',1).single();
+    var { data: cfgRows, error: cfgErr } = await sb.from('configuracoes').select('dados').eq('id',1).maybeSingle();
     if(!cfgErr && cfgRows && cfgRows.dados){
       D.cfg = Object.assign({}, DEFAULT_CFG, cfgRows.dados);
     } else {
@@ -662,40 +670,48 @@ async function dbLoadAll(){
       D.cfg = Object.assign({}, DEFAULT_CFG);
     }
     var { data: gifts, error: gErr } = await sb.from('presentes').select('dados');
-    if(!gErr && gifts){ D.gifts = gifts.map(function(r){ return r.dados; }); }
+    if(!gErr && gifts){ 
+      D.gifts = gifts.map(function(r){ return r ? r.dados : null; }).filter(Boolean); 
+    }
     var { data: rsvps, error: rErr } = await sb.from('rsvps').select('dados');
-    if(!rErr && rsvps){ D.rsvps = rsvps.map(function(r){ return r.dados; }); }
+    if(!rErr && rsvps){ 
+      D.rsvps = rsvps.map(function(r){ return r ? r.dados : null; }).filter(Boolean); 
+    }
   } catch(e){
-    console.warn('Supabase indisponível, usando dados padrão.', e);
-    D.cfg = Object.assign({}, DEFAULT_CFG);
+    console.warn('Erro ao conectar ao Supabase, mantendo padrão local.', e);
   }
 }
 
 async function dbSaveCfg(){
+  if (!sb) return;
   try {
     await sb.from('configuracoes').upsert({ id:1, dados: D.cfg });
   } catch(e){ console.warn('Erro ao salvar config:', e); }
 }
 
 async function dbAddGift(g){
+  if (!sb) return;
   try {
     await sb.from('presentes').insert({ id: g.id, dados: g });
   } catch(e){ console.warn('Erro ao salvar presente:', e); }
 }
 
 async function dbUpdateGift(g){
+  if (!sb) return;
   try {
     await sb.from('presentes').update({ dados: g }).eq('id', g.id);
   } catch(e){ console.warn('Erro ao atualizar presente:', e); }
 }
 
 async function dbDeleteGift(id){
+  if (!sb) return;
   try {
     await sb.from('presentes').delete().eq('id', id);
   } catch(e){ console.warn('Erro ao remover presente:', e); }
 }
 
 async function dbAddRsvp(r){
+  if (!sb) return;
   try {
     await sb.from('rsvps').insert({ id: r.id, dados: r });
   } catch(e){ console.warn('Erro ao salvar RSVP:', e); }
@@ -790,12 +806,13 @@ W.csvRsvp = function(){
 };
 
 // ── GIFTS ──
-function cats(){ var s=new Set(); D.gifts.forEach(function(g){ if(g.cat)s.add(g.cat); }); return Array.from(s); }
+function cats(){ var s=new Set(); D.gifts.forEach(function(g){ if(g && g.cat)s.add(g.cat); }); return Array.from(s); }
 
 function initPriceSlider(){
-  var prices=D.gifts.map(function(g){ return parseFloat(g.price)||0; }).filter(Boolean);
+  var prices=D.gifts.map(function(g){ return g ? (parseFloat(g.price)||0) : 0; }).filter(Boolean);
   var max=prices.length?Math.ceil(Math.max.apply(null,prices)/10)*10:1000;
   var sl=W.$('priceRange');
+  if(!sl) return;
   sl.max=max; sl.value=max; gState.maxPrice=Infinity;
   sl.style.setProperty('--pct','100%');
   updatePriceLabel();
@@ -812,6 +829,7 @@ function initPriceSlider(){
 
 function updatePriceLabel(){
   var sl=W.$('priceRange'),v=parseFloat(sl.value),lbl=W.$('priceRangeVal');
+  if(!sl || !lbl) return;
   if(v>=parseFloat(sl.max)){ lbl.textContent='Todos'; }
   else{ lbl.textContent='Até R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:0}); }
 }
@@ -825,34 +843,15 @@ W.setStatus = function(s,btn){
 
 function renderFilters(){
   var bar=W.$('fBar'),cs=cats();
+  if(!bar) return;
   var h='<button class="filt'+(gState.cat==='todos'?' on':'')+'" id="filtAll">Todas</button>';
   cs.forEach(function(cat){ h+='<button class="filt'+(gState.cat===cat?' on':'')+'" data-f="'+esc(cat)+'">'+esc(cat)+'</button>'; });
   bar.innerHTML=h;
   bar.querySelectorAll('.filt').forEach(function(b){ b.addEventListener('click',function(){ W.setFilter(b.dataset.f||'todos'); }); });
 }
 
-function renderGifts(){
-  var grid=W.$('gGrid');
-  var list=D.gifts.slice();
-  if(gState.cat!=='todos') list=list.filter(function(g){ return g.cat===gState.cat; });
-  if(gState.status==='disponivel') list=list.filter(function(g){ return g.type==='quota'?(g.taken||0)<(g.qtot||1):!g.reservedBy; });
-  if(gState.status==='reservado') list=list.filter(function(g){ return g.type==='quota'?(g.taken||0)>0:!!g.reservedBy; });
-  if(gState.maxPrice!==Infinity) list=list.filter(function(g){
-    var p=g.price===''||g.price===null||g.price===undefined?null:parseFloat(g.price);
-    return p===null||(!isNaN(p)&&p<=gState.maxPrice);
-  });
-  var sort=W.$('sortOrder').value;
-  if(sort==='asc') list.sort(function(a,b){ return (parseFloat(a.price)||0)-(parseFloat(b.price)||0); });
-  if(sort==='desc') list.sort(function(a,b){ return (parseFloat(b.price)||0)-(parseFloat(a.price)||0); });
-  var avail=D.gifts.filter(function(g){ return g.type==='quota'?(g.taken||0)<(g.qtot||1):!g.reservedBy; }).length;
-  W.$('giftCount').textContent=list.length+' presente'+(list.length!==1?'s':'')+' encontrado'+(list.length!==1?'s':'')+' · '+avail+' disponível'+(avail!==1?'is':'');
-  if(!list.length){ grid.innerHTML='<div class="empty">Nenhum presente'+(D.gifts.length?' encontrado com esses filtros.':' ainda.<br><small style="color:var(--mid)">Faça login como admin para adicionar.</small>')+'</div>'; return; }
-  grid.innerHTML=list.map(gCard).join('');
-  grid.querySelectorAll('[data-gid]').forEach(function(b){ b.addEventListener('click',function(){ openModal(b.dataset.gid); }); });
-  grid.querySelectorAll('[data-url]').forEach(function(b){ b.addEventListener('click',function(e){ e.stopPropagation(); window.open(b.dataset.url,'_blank','noopener'); }); });
-}
-
 function gCard(g){
+  if(!g) return '';
   var done=g.type!=='quota'&&g.reservedBy;
   var imgH=g.img
     ?'<div class="gimg-wrap"><img src="'+esc(g.img)+'" alt="'+esc(g.title)+'" loading="lazy" onerror="this.parentElement.innerHTML=\'🎁\'"></div>'
@@ -877,9 +876,32 @@ function gCard(g){
   return '<div class="gcard'+(done&&g.type!=='quota'?' done':'')+'">'+imgH+badge+'<div class="gbody">'+ctH+'<div class="gtitle">'+esc(g.title)+'</div>'+dcH+prH+ex+'</div></div>';
 }
 
+function renderGifts(){
+  var grid=W.$('gGrid');
+  if(!grid) return;
+  var list=D.gifts.slice();
+  if(gState.cat!=='todos') list=list.filter(function(g){ return g && g.cat===gState.cat; });
+  if(gState.status==='disponivel') list=list.filter(function(g){ return g && (g.type==='quota'?(g.taken||0)<(g.qtot||1):!g.reservedBy); });
+  if(gState.status==='reservado') list=list.filter(function(g){ return g && (g.type==='quota'?(g.taken||0)>0:!!g.reservedBy); });
+  if(gState.maxPrice!==Infinity) list=list.filter(function(g){
+    if(!g) return false;
+    var p=g.price===''||g.price===null||g.price===undefined?null:parseFloat(g.price);
+    return p===null||(!isNaN(p)&&p<=gState.maxPrice);
+  });
+  var sort=W.$('sortOrder').value;
+  if(sort==='asc') list.sort(function(a,b){ return (a && b) ? (parseFloat(a.price)||0)-(parseFloat(b.price)||0) : 0; });
+  if(sort==='desc') list.sort(function(a,b){ return (a && b) ? (parseFloat(b.price)||0)-(parseFloat(a.price)||0) : 0; });
+  var avail=D.gifts.filter(function(g){ return g && (g.type==='quota'?(g.taken||0)<(g.qtot||1):!g.reservedBy); }).length;
+  W.$('giftCount').textContent=list.length+' presente'+(list.length!==1?'s':'')+' encontrado'+(list.length!==1?'s':'')+' · '+avail+' disponível'+(avail!==1?'is':'');
+  if(!list.length){ grid.innerHTML='<div class="empty">Nenhum presente'+(D.gifts.length?' encontrado com esses filtros.':' ainda.<br><small style="color:var(--mid)">Faça login como admin para adicionar.</small>')+'</div>'; return; }
+  grid.innerHTML=list.map(gCard).join('');
+  grid.querySelectorAll('[data-gid]').forEach(function(b){ b.addEventListener('click',function(){ openModal(b.dataset.gid); }); });
+  grid.querySelectorAll('[data-url]').forEach(function(b){ b.addEventListener('click',function(e){ e.stopPropagation(); window.open(b.dataset.url,'_blank','noopener'); }); });
+}
+
 // ── MODAL ──
 function openModal(id){
-  var g=D.gifts.find(function(x){ return x.id===id; }); if(!g)return;
+  var g=D.gifts.find(function(x){ return x && x.id===id; }); if(!g)return;
   var mb=W.$('mBody');
   var imgH=g.img?'<img src="'+esc(g.img)+'" class="modal-img" onerror="this.style.display=\'none\'">':'';
   var dcH=g.desc?'<p style="font-size:13px;color:var(--mid);margin-bottom:10px;line-height:1.65">'+esc(g.desc).replace(/\n/g,'<br>')+'</p>':'';
@@ -922,7 +944,7 @@ function openModal(id){
 
 // ── CSV GIFTS ──
 W.csvGifts = function(){
-  var reserved=D.gifts.filter(function(g){ return (g.type==='quota'&&g.taken>0)||(g.type!=='quota'&&g.reservedBy); });
+  var reserved=D.gifts.filter(function(g){ return g && ((g.type==='quota'&&g.taken>0)||(g.type!=='quota'&&g.reservedBy)); });
   if(!reserved.length){ W.toast('Nenhum presente reservado ainda.'); return; }
   var rows=[['Título','Valor','Categoria','Tipo','Pessoa Responsável','Data de Reserva']];
   reserved.forEach(function(g){
@@ -952,8 +974,8 @@ function openAdmin(){
   var c=D.cfg;
   W.$('cN1').value=c.n1||''; W.$('cN2').value=c.n2||''; W.$('cDate').value=c.date||'';
   W.$('cTime').value=c.time||''; W.$('cVenue').value=c.venue||''; W.$('cAddr').value=c.addr||'';
-  W.$('cDress').value=c.dress||''; W.$('cMsg').value=c.msg||'';
-  W.$('cMap').value=c.mapUrl||''; W.$('cSpotify').value=c.spotifyUrl||'';
+  W.$('cMap').value=c.mapUrl||''; W.$('cDress').value=c.dress||''; W.$('cMsg').value=c.msg||'';
+  W.$('cSpotify').value=c.spotifyUrl||'';
   renderAdminList(); W.aTab('Add');
   W.$('ovAdmin').classList.add('open');
 }
@@ -973,7 +995,6 @@ W.togType = function(){
 };
 
 // ── FETCH PRODUCT ──
-var prev={};
 function doFetch(url,slot,btnId,pvId,errId,imgId,titId,prcId){
   if(!url){ W.toast('Cole um link primeiro.'); return; }
   var btn=W.$(btnId); btn.textContent='…'; btn.disabled=true;
@@ -999,7 +1020,7 @@ function doFetch(url,slot,btnId,pvId,errId,imgId,titId,prcId){
 }
 
 function applyPrev(slot){
-  var p=prev[slot]; if(!p)return;
+  var p=prev[slot]; if(!p) return;
   if(p.title&&!W.$('gTit').value) W.$('gTit').value=p.title;
   if(p.price&&!W.$('gVal').value) W.$('gVal').value=parseFloat(p.price)||'';
   if(p.image&&!gImgB64) W.$('gImg').value=p.image;
@@ -1015,7 +1036,7 @@ W.$('buseM').addEventListener('click',function(){ applyPrev('M'); });
   W.$('buse'+n).addEventListener('click',function(){ applyPrev(n); });
 });
 
-// ── IMAGE UPLOAD + DRAG & DROP (LÓGICA DE CANVAS REMOVIDA) ──
+// ── IMAGE UPLOAD + DRAG & DROP ──
 function processImageFile(f){
   if(!f||!f.type.match(/^image\//)) { W.toast('Use PNG, JPG ou WEBP.'); return; }
   var r=new FileReader();
@@ -1103,13 +1124,14 @@ function renderAdminList(){
   var el=W.$('aList');
   if(!D.gifts.length){ el.innerHTML='<p style="color:var(--mid);font-size:13px">Nenhum presente ainda.</p>'; return; }
   el.innerHTML=D.gifts.map(function(g){
+    if(!g) return '';
     return '<div class="ai"><span>'+esc(g.title)+' <small style="color:var(--mid)">('+g.type+(g.cat?' · '+g.cat:'')+')</small></span>'
       +'<button class="bdel" data-did="'+g.id+'">Remover</button></div>';
   }).join('');
   el.querySelectorAll('.bdel').forEach(function(b){
     b.addEventListener('click', async function(){
       if(!confirm('Remover este presente?'))return;
-      D.gifts=D.gifts.filter(function(g){ return g.id!==b.dataset.did; });
+      D.gifts=D.gifts.filter(function(g){ return g && g.id!==b.dataset.did; });
       await dbDeleteGift(b.dataset.did);
       renderGifts(); renderFilters(); renderAdminList(); initPriceSlider();
     });
@@ -1146,10 +1168,16 @@ async function init(){
   refreshAuthUI();
   applyConfig();
 
-  W.$('sGifts').querySelectorAll('[data-s]').forEach(function(b){
-    b.addEventListener('click',function(){ W.setStatus(b.dataset.s,b); });
-  });
-  W.$('sortOrder').addEventListener('change',function(){ gState.sort=this.value; renderGifts(); });
+  var sGifts = W.$('sGifts');
+  if(sGifts) {
+    sGifts.querySelectorAll('[data-s]').forEach(function(b){
+      b.addEventListener('click',function(){ W.setStatus(b.dataset.s,b); });
+    });
+  }
+  var sortOrder = W.$('sortOrder');
+  if(sortOrder) {
+    sortOrder.addEventListener('change',function(){ gState.sort=this.value; renderGifts(); });
+  }
   initPriceSlider();
 
   renderFilters(); renderGifts(); renderRSVPs(); startCD();
