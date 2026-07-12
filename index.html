@@ -240,271 +240,1431 @@ footer small{font-size:11px;letter-spacing:0.12em;text-transform:uppercase;opaci
   .csv-row{flex-direction:column}
 }
 </style>
-</head>
-<body>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,400;6..96,500&family=DM+Sans:wght@400;500;600&display=swap');
 
-<div class="db-loading" id="dbLoading">
-  <div class="spinner"></div>
-  <span>Carregando Universo...</span>
-</div>
+:root{
+  --ivory:#F1F0E8;
+  --paper:#F8F7F1;
+  --beige:#E5E1D6;
+  --ink:#080808;
+  --charcoal:#171714;
+  --taupe:#827E74;
+  --body-text:#403D37;
+  --line:#BDB9AE;
 
-<div class="toast" id="T"></div>
+  /* Mantidos para compatibilidade com HTML e JavaScript existentes */
+  --bg-light:var(--ivory);
+  --bg-white:var(--paper);
+  --accent-beige:var(--beige);
+  --dark-charcoal:var(--ink);
+  --text-muted:var(--taupe);
+  --border:rgba(8,8,8,.16);
 
-<div class="admin-bar" id="adminBar">
-  <span>🔐 Painel do Casal Ativo</span>
-  <button onclick="W.logout()">Desconectar</button>
-</div>
+  --font-serif:'Bodoni Moda','Cormorant Garamond',serif;
+  --font-sans:'DM Sans','Lato',sans-serif;
 
-<nav>
-  <div class="logo" id="nLogo">♡ Gui &amp; Ana</div>
-  <div class="nav-links">
-    <button class="nl" onclick="W.go('sInfo')">O Evento</button>
-    <button class="nl" onclick="W.go('sRsvp')">Presença</button>
-    <button class="nl" onclick="W.go('sGifts')">Presentes</button>
-    <button class="nl" onclick="W.go('sSpotify')">Playlist</button>
-  </div>
-  <div class="nav-right">
-    <button class="btn-adm" id="btnAdm" onclick="W.clickAdmin()">Admin</button>
-    <button class="hamburger" id="hamburger" onclick="W.toggleMenu()" aria-label="Menu">
-      <span></span><span></span><span></span>
-    </button>
-  </div>
-</nav>
+  --sp-xs:4px;
+  --sp-sm:8px;
+  --sp-md:16px;
+  --sp-lg:24px;
+  --sp-xl:40px;
+  --sp-2xl:64px;
 
-<div class="mobile-menu" id="mobileMenu">
-  <button class="nl" onclick="W.go('sInfo');W.toggleMenu()">O Evento</button>
-  <button class="nl" onclick="W.go('sRsvp');W.toggleMenu()">Presença</button>
-  <button class="nl" onclick="W.go('sGifts');W.toggleMenu()">Presentes</button>
-  <button class="nl" onclick="W.go('sSpotify');W.toggleMenu()">Playlist</button>
-  <button class="nl" onclick="W.clickAdmin();W.toggleMenu()" style="border-color:var(--dark-charcoal);font-weight:700">Painel Restrito</button>
-</div>
+  --r-sm:0;
+  --r-md:0;
+  --r-lg:0;
+  --r-full:0;
+  --shadow-sm:none;
+  --shadow-md:none;
+  --t:180ms cubic-bezier(.2,.7,.2,1);
+}
 
-<section class="hero" id="sTop">
-  <div class="photo-wrap" id="phWrap" onclick="W.adm&&W.$('fileIn').click()">
-    <span id="phPh">♡</span>
-    <img id="phImg" src="" alt="" style="display:none">
-  </div>
-  <input type="file" id="fileIn" accept="image/*" style="display:none">
-  <div class="hero-tag" id="hTag">Gui &amp; Ana · Salve a Data</div>
-  <h1 id="hTitle">Gui &amp; Ana</h1>
-  <div class="sep"><div class="sep-line"></div><span style="color:var(--dark-charcoal);opacity:0.3">✦</span><div class="sep-line"></div></div>
-  <p id="hMsg">Estamos muito felizes em celebrar esse momento especial ao lado das pessoas que amamos. Seja muito bem-vindo à nossa lista de presentes.</p>
-  <div class="scroll-hint"><span>Rolar Página</span><div class="scroll-line"></div></div>
-</section>
+*,
+*::before,
+*::after{box-sizing:border-box}
 
-<section class="cd-sec">
-  <div class="cd-lbl">Contagem regressiva para o grande dia</div>
-  <div class="cd-grid">
-    <div class="cd-item"><div class="cd-num" id="cdD">--</div><div class="cd-unit">Dias</div></div>
-    <div class="cd-item"><div class="cd-num" id="cdH">--</div><div class="cd-unit">Horas</div></div>
-    <div class="cd-item"><div class="cd-num" id="cdM">--</div><div class="cd-unit">Minutos</div></div>
-    <div class="cd-item"><div class="cd-num" id="cdS">--</div><div class="cd-unit">Segundos</div></div>
-  </div>
-</section>
+html{scroll-behavior:smooth}
 
-<section class="sec" id="sInfo">
-  <div class="sec-head"><div class="sec-tag">Confira os Detalhes</div><div class="sec-title">O Evento</div></div>
-  <div class="info-grid">
-    <div class="info-card"><div style="font-size:1.5rem">📅</div><h2>Data do Encontro</h2><p id="iDate">A confirmar</p><div class="info-detail" id="iTime"></div></div>
-    <div class="info-card"><div style="font-size:1.5rem">📍</div><h2>O Espaço</h2><p id="iVenue">A confirmar</p><div class="info-detail" id="iAddr"></div></div>
-    <div class="info-card"><div style="font-size:1.5rem">👗</div><h2>Dress Code</h2><p id="iDress">A confirmar</p></div>
-  </div>
-  <div id="mapWrap" style="display:none">
-    <div class="map-wrap">
-      <iframe id="mapFrame" src="" allowfullscreen loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
-    </div>
-  </div>
-</section>
+body{
+  margin:0;
+  background:var(--ivory);
+  color:var(--ink);
+  font-family:var(--font-sans);
+  font-size:14px;
+  line-height:1.65;
+  letter-spacing:.005em;
+}
 
-<section class="spotify-sec" id="sSpotify">
-  <div class="spotify-inner">
-    <div class="spotify-lbl">Trilha Sonora Oficial</div>
-    <div class="spotify-title">Entre no Nosso Clima</div>
-    <div class="spotify-wrap">
-      <iframe id="spotifyFrame"
-        src="https://open.spotify.com/embed/playlist/37i9dQZF1DWSlRNWoWejBr?utm_source=generator&si=206455d5c2d84d4f"
-        height="352" frameborder="0" allowtransparency="true"
-        allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-        loading="lazy"></iframe>
-    </div>
-    <p style="font-size:12px;color:var(--accent-beige);margin-top:16px;opacity:.7">Sintonize a playlist e navegue escutando nossas músicas favoritas 🎵</p>
-  </div>
-</section>
+img{display:block;max-width:100%}
 
-<section class="rsvp-bg" id="sRsvp">
-  <div class="rsvp-inner">
-    <div class="sec-head"><div class="sec-tag">Confirmação de Presença</div><div class="sec-title">Você Estará Conosco?</div></div>
-    <div class="rsvp-box">
-      <div class="fg"><label>Nome Completo do Convidado</label><input id="rN" type="text" placeholder="Escreva seu nome e sobrenome"></div>
-      <div class="fg"><label>Sua Presença</label>
-        <select id="rA"><option value="">Selecione sua resposta...</option><option value="s">Confirmado! Estarei lá 🎉</option><option value="n">Infelizmente não poderei comparecer</option></select>
-      </div>
-      <div class="fg" id="rNG" style="display:none">
-        <label>Total de Acompanhantes (incluindo você)</label>
-        <input id="rNum" type="number" min="1" max="20" value="1">
-      </div>
-      <div id="rCompanions"></div>
-      <button class="btn-main" id="btnRsvp">Validar Presença</button>
-    </div>
-    <div id="rList" style="margin-top:20px;display:none"></div>
-    <div class="csv-row" id="rsvpCsvRow" style="display:none">
-      <button class="btn-csv" onclick="W.csvRsvp()">⬇ Baixar Relatório de Presenças (CSV)</button>
-    </div>
-  </div>
-</section>
+button,
+input,
+select,
+textarea{font:inherit}
 
-<section class="gifts-wrap" id="sGifts">
-  <div class="sec-head"><div class="sec-tag">Lista de Presentes Virtuais</div><div class="sec-title">Apoie com Amor</div></div>
-  <div class="filter-panel">
-    <div class="filter-row">
-      <span class="filter-label">Filtro de Categoria</span>
-      <div class="fbar" id="fBar"><button class="filt on" id="filtAll">Todas as Opções</button></div>
-    </div>
-    <div class="filter-row filter-row-controls">
-      <div class="filter-group">
-        <span class="filter-label">Disponibilidade</span>
-        <div style="display:flex;gap:6px;flex-wrap:wrap">
-          <button class="filt on" data-s="todos">Ver Todos</button>
-          <button class="filt" data-s="disponivel">Disponíveis</button>
-          <button class="filt" data-s="reservado">Reservados</button>
-        </div>
-      </div>
-      <div class="filter-group">
-        <span class="filter-label">Faixa de Preço</span>
-        <div class="price-filter-wrap">
-          <input type="range" id="priceRange" min="0" max="1000" value="1000" step="10" class="price-slider">
-          <div class="price-labels"><span>R$ 0</span><span id="priceRangeVal" style="font-weight:700;color:var(--dark-charcoal)">Todos</span></div>
-        </div>
-      </div>
-      <div class="filter-group">
-        <span class="filter-label">Ordenação</span>
-        <select id="sortOrder" class="sort-select">
-          <option value="">Ordenação Padrão</option>
-          <option value="asc">Menor valor primeiro</option>
-          <option value="desc">Maior valor primeiro</option>
-        </select>
-      </div>
-    </div>
-    <div class="filter-results"><span id="giftCount"></span></div>
-  </div>
-  <div class="ggrid" id="gGrid"><div class="empty">Sincronizando vitrine...</div></div>
-</section>
+button{
+  border:0;
+  border-radius:0;
+  background:none;
+  color:inherit;
+  cursor:pointer;
+}
 
-<footer><div class="fn" id="fNames">Gui &amp; Ana</div><small>Feito com amor por vocês ♡</small></footer>
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible{
+  outline:1px solid var(--ink);
+  outline-offset:3px;
+}
 
-<div class="ov" id="ovLogin">
-  <div class="panel" style="max-width:360px;text-align:center">
-    <button class="x" onclick="W.$('ovLogin').classList.remove('open')">×</button>
-    <h2>Acesso Autenticado</h2>
-    <p style="font-size:12px;color:var(--text-muted);margin-bottom:20px">Configurações internas do casal</p>
-    <div class="fg" style="text-align:left"><label>Login</label><input id="lU" type="text" placeholder="noivos"></div>
-    <div class="fg" style="text-align:left"><label>Chave de Acesso</label><input id="lP" type="password" placeholder="••••••••"></div>
-    <button class="btn-main" onclick="W.doLogin()">Acessar Painel</button>
-    <div id="lErr" style="color:var(--dark-charcoal);font-weight:700;font-size:12px;margin-top:10px;display:none">Credenciais inválidas.</div>
-  </div>
-</div>
+input,
+select,
+textarea{
+  width:100%;
+  border:1px solid var(--line);
+  border-radius:0;
+  background:transparent;
+  color:var(--ink);
+  padding:13px 14px;
+  font-family:var(--font-sans);
+  font-size:13px;
+  letter-spacing:.02em;
+  transition:border-color var(--t),background var(--t);
+}
 
-<div class="ov" id="ovAdmin">
-  <div class="panel">
-    <button class="x" onclick="W.$('ovAdmin').classList.remove('open')">×</button>
-    <h2>Gerenciador Geral</h2>
-    <div class="tabs">
-      <button class="tab on" id="tAdd" onclick="W.aTab('Add')">Novo Presente</button>
-      <button class="tab" id="tList" onclick="W.aTab('List')">Lista Cadastrada</button>
-      <button class="tab" id="tCfg" onclick="W.aTab('Cfg')">Dados do Evento</button>
-    </div>
+input::placeholder,
+textarea::placeholder{color:var(--taupe)}
 
-    <div id="pAdd">
-      <div class="fg"><label>Formato de Recebimento</label>
-        <div class="radrow">
-          <label class="ro"><input type="radio" name="gt" value="manual" checked onchange="W.togType()"> Simbólico (Pix)</label>
-          <label class="ro"><input type="radio" name="gt" value="url" onchange="W.togType()"> Links de E-commerce</label>
-          <label class="ro"><input type="radio" name="gt" value="quota" onchange="W.togType()"> Cotas Coletivas</label>
-        </div>
-      </div>
-      <div class="fg"><label>Título do Item *</label><input id="gTit" type="text" placeholder="Ex: Jantar romântico na lua de mel"></div>
-      <div class="fg"><label>Grupo / Categoria</label><input id="gCat" type="text" placeholder="Ex: Viagem, Cozinha, Sala..."></div>
-      <div class="fg"><label>Instruções / Chave Pix (Opcional)</label><textarea id="gDesc" rows="2" placeholder="Informações adicionais para o convidado..."></textarea></div>
-      <div class="fg">
-        <label>Upload da Vitrine</label>
-        <div class="upload-zone" id="uploadZone">
-          <input type="file" id="gImgFile" accept="image/*" style="display:none">
-          <div id="gImgPreviewWrap" class="prev-img-wrap">
-            <img id="gImgPreview" src="" alt="">
-            <button id="gImgClear" class="prev-img-x" type="button">×</button>
-          </div>
-          <div id="dropArea" style="text-align:center;padding:12px 0">
-            <div style="font-size:1.5rem;margin-bottom:6px;opacity:.4">🖼️</div>
-            <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px">Solte o arquivo de imagem aqui ou</div>
-            <button class="fbtn" id="btnUploadImg" type="button" style="margin:0 auto">📁 Carregar Mídia</button>
-            <div style="font-size:9px;color:var(--text-muted);margin-top:6px">Formatos aceitos: PNG, JPG ou WEBP</div>
-          </div>
-          <div class="or-divider"><span>ou use uma imagem da web</span></div>
-          <div class="frow" style="margin-bottom:0">
-            <input id="gImg" type="text" placeholder="Cole a URL direta da imagem aqui...">
-            <button class="fbtn" id="fbM" type="button">Mapear</button>
-          </div>
-        </div>
-        <div class="pbox" id="pvM"><img class="pimg" id="pvImgM" src="" alt=""><div class="pinfo"><div class="ptit" id="pvTM"></div><div class="pprc" id="pvPM"></div></div><button class="buse" id="buseM" type="button">Aplicar</button></div>
-        <div class="ferr" id="peM"></div>
-      </div>
-      <div class="fg"><label>Valor Sugerido (R$)</label><input id="gVal" type="number" placeholder="0.00" min="0" step="0.01"></div>
-      <div class="cond" id="cUrl">
-        <hr class="hdivider">
-        <p style="font-size:11px;color:var(--text-muted);margin-bottom:12px">Links Diretos para Lojas Externas</p>
-        <div class="fg">
-          <label>Opção de Loja 1</label>
-          <div class="frow"><input id="u1" type="text" placeholder="https://amazon.com.br/..."><button class="fbtn" id="fb1" type="button">Puxar</button></div>
-          <input id="l1" type="text" placeholder="Nome Comercial (Ex: Amazon)" style="margin-top:6px">
-          <div class="pbox" id="pv1"><img class="pimg" id="pvImg1"><div class="pinfo"><div class="ptit" id="pvT1"></div><div class="pprc" id="pvP1"></div></div><button class="buse" id="buse1">Aplicar</button></div>
-          <div class="ferr" id="pe1"></div>
-        </div>
-        <div class="fg">
-          <label>Opção de Loja 2</label>
-          <div class="frow"><input id="u2" type="text" placeholder="https://mercadolivre.com.br/..."><button class="fbtn" id="fb2" type="button">Puxar</button></div>
-          <input id="l2" type="text" placeholder="Nome Comercial" style="margin-top:6px">
-          <div class="pbox" id="pv2"><img class="pimg" id="pvImg2"><div class="pinfo"><div class="ptit" id="pvT2"></div><div class="pprc" id="pvP2"></div></div><button class="buse" id="buse2">Aplicar</button></div>
-          <div class="ferr" id="pe2"></div>
-        </div>
-      </div>
-      <div class="cond" id="cQuota">
-        <hr class="hdivider">
-        <div class="fg"><label>Limite de Cotas Disponíveis</label><input id="gQtot" type="number" placeholder="Ex: 10" min="1"></div>
-      </div>
-      <button class="btn-main" id="btnAddGift">Salvar na Vitrine</button>
-    </div>
+input:focus,
+select:focus,
+textarea:focus{
+  outline:none;
+  border-color:var(--ink);
+  box-shadow:none;
+  background:rgba(255,255,255,.28);
+}
 
-    <div id="pList" style="display:none">
-      <div id="aList"><p style="color:var(--text-muted);font-size:12px">Nenhum registro cadastrado.</p></div>
-      <div class="csv-row" style="margin-top:16px">
-        <button class="btn-csv" onclick="W.csvGifts()">⬇ Exportar Dados de Reservas (CSV)</button>
-      </div>
-    </div>
+label,
+.filter-label{
+  display:block;
+  margin-bottom:8px;
+  color:var(--ink);
+  font-size:10px;
+  font-weight:500;
+  letter-spacing:.16em;
+  text-transform:uppercase;
+}
 
-    <div id="pCfg" style="display:none">
-      <div class="fg"><label>Identificação Noivo(a) 1</label><input id="cN1" type="text"></div>
-      <div class="fg"><label>Identificação Noivo(a) 2</label><input id="cN2" type="text"></div>
-      <div class="fg"><label>Data da Cerimônia</label><input id="cDate" type="date"></div>
-      <div class="fg"><label>Horário Marcado</label><input id="cTime" type="text"></div>
-      <div class="fg"><label>Local do Evento</label><input id="cVenue" type="text"></div>
-      <div class="fg"><label>Endereço Geográfico</label><input id="cAddr" type="text"></div>
-      <div class="fg"><label>Código de Incorporação Google Maps (src)</label><input id="cMap" type="text"></div>
-      <div class="fg"><label>Código de Vestimenta</label><input id="cDress" type="text"></div>
-      <div class="fg"><label>Mensagem aos Convidados</label><textarea id="cMsg" rows="3"></textarea></div>
-      <div class="fg"><label>Código de Incorporação Spotify (src)</label><input id="cSpotify" type="text"></div>
-      <div class="fg"><label>Atualizar Senha Admin (em branco para manter)</label><input id="cPass" type="password" placeholder="••••••••"></div>
-      <button class="btn-main" id="btnSaveCfg">Atualizar Configurações</button>
-    </div>
-  </div>
-</div>
+.fg{margin-bottom:20px}
 
-<!-- FLOATING CONSOLE PANELS (ADMIN INTERFACE) -->
-<div class="modal-ov" id="ovModal">
-  <div class="modal">
-    <button class="x" onclick="W.$('ovModal').classList.remove('open')">×</button>
-    <div id="mBody"></div>
-  </div>
-</div>
+#sInfo,
+#sRsvp,
+#sGifts,
+#sSpotify{scroll-margin-top:72px}
+
+/* Navegação */
+nav{
+  position:sticky;
+  top:0;
+  z-index:100;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  height:72px;
+  padding:0 clamp(24px,5vw,72px);
+  background:rgba(241,240,232,.96);
+  border-bottom:1px solid rgba(8,8,8,.16);
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+}
+
+.logo{
+  color:var(--ink);
+  font-family:var(--font-serif);
+  font-size:clamp(1.35rem,2.2vw,1.9rem);
+  font-weight:400;
+  letter-spacing:-.04em;
+  white-space:nowrap;
+}
+
+.nav-links{
+  display:flex;
+  align-items:center;
+  gap:22px;
+}
+
+.nl{
+  padding:8px 0;
+  color:var(--taupe);
+  font-size:10px;
+  font-weight:500;
+  letter-spacing:.15em;
+  text-transform:uppercase;
+  transition:color var(--t);
+}
+
+.nl:hover{color:var(--ink)}
+
+.nav-right{
+  display:flex;
+  align-items:center;
+  gap:14px;
+}
+
+.btn-adm,
+.btn-main,
+.btn-csv,
+.btn-res,
+.btn-q,
+.fbtn,
+.buse{
+  border:1px solid var(--ink);
+  border-radius:0;
+  font-size:10px;
+  font-weight:500;
+  letter-spacing:.15em;
+  text-transform:uppercase;
+  transition:background var(--t),color var(--t),border-color var(--t),opacity var(--t);
+}
+
+.btn-adm{
+  padding:9px 14px;
+  color:var(--ink);
+  background:transparent;
+}
+
+.btn-adm:hover,
+.btn-adm.active{
+  background:var(--ink);
+  color:var(--ivory);
+}
+
+.hamburger{
+  display:none;
+  flex-direction:column;
+  gap:5px;
+  padding:6px 0 6px 6px;
+}
+
+.hamburger span{
+  display:block;
+  width:21px;
+  height:1px;
+  background:var(--ink);
+}
+
+.mobile-menu{
+  position:fixed;
+  inset:0;
+  top:72px;
+  z-index:99;
+  display:none;
+  flex-direction:column;
+  gap:0;
+  padding:28px 24px;
+  background:var(--ivory);
+}
+
+.mobile-menu.open{display:flex}
+
+.mobile-menu .nl{
+  width:100%;
+  padding:17px 0;
+  border-bottom:1px solid var(--line);
+  color:var(--ink);
+  text-align:left;
+}
+
+/* Administração */
+.admin-bar{
+  display:none;
+  align-items:center;
+  justify-content:center;
+  gap:16px;
+  padding:9px 24px;
+  background:var(--ink);
+  color:var(--ivory);
+  font-size:10px;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+}
+
+.admin-bar.show{display:flex}
+
+.admin-bar button{
+  color:var(--ivory);
+  font-size:10px;
+  letter-spacing:.14em;
+  text-decoration:underline;
+  text-underline-offset:3px;
+}
+
+/* Hero */
+.hero{
+  position:relative;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  min-height:calc(100svh - 72px);
+  padding:128px clamp(24px,7vw,110px) 92px;
+  overflow:hidden;
+  background:var(--ink);
+  color:var(--ivory);
+  text-align:center;
+}
+
+.hero::before{
+  content:'';
+  position:absolute;
+  inset:0;
+  z-index:1;
+  background:rgba(0,0,0,.44);
+  pointer-events:none;
+}
+
+.photo-wrap{
+  position:absolute;
+  inset:0;
+  z-index:0;
+  display:block;
+  width:100%;
+  height:100%;
+  margin:0;
+  overflow:hidden;
+  border-radius:0;
+  background:#111;
+  cursor:pointer;
+  opacity:1;
+}
+
+.photo-wrap:hover{transform:none}
+
+.photo-wrap #phPh{display:none}
+
+.photo-wrap img{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  filter:grayscale(1) contrast(.92) brightness(.7);
+}
+
+.hero > :not(.photo-wrap):not(input){
+  position:relative;
+  z-index:2;
+}
+
+.hero h1{
+  order:1;
+  max-width:1100px;
+  margin:0;
+  color:var(--ivory);
+  font-family:var(--font-serif);
+  font-size:clamp(4.2rem,10vw,9.2rem);
+  font-weight:400;
+  line-height:.82;
+  letter-spacing:-.065em;
+  text-transform:uppercase;
+}
+
+.hero-tag{
+  position:absolute !important;
+  bottom:46px;
+  left:clamp(24px,7vw,110px);
+  order:2;
+  margin:0;
+  padding:0;
+  border:0;
+  color:var(--ivory);
+  font-size:9px;
+  font-weight:500;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  text-align:left;
+}
+
+.hero p{
+  position:absolute !important;
+  right:clamp(24px,7vw,110px);
+  bottom:42px;
+  order:3;
+  max-width:230px;
+  margin:0;
+  color:rgba(241,240,232,.86);
+  font-size:10px;
+  line-height:1.55;
+  letter-spacing:.02em;
+  text-align:right;
+}
+
+.sep,
+.scroll-hint{display:none}
+
+/* Contagem regressiva */
+.cd-sec{
+  padding:clamp(72px,10vw,130px) 24px;
+  background:var(--ink);
+  color:var(--ivory);
+  border-top:1px solid rgba(241,240,232,.18);
+  text-align:center;
+}
+
+.cd-lbl,
+.spotify-lbl{
+  margin-bottom:34px;
+  color:rgba(241,240,232,.67);
+  font-size:10px;
+  font-weight:500;
+  letter-spacing:.2em;
+  text-transform:uppercase;
+}
+
+.cd-grid{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(90px,160px));
+  justify-content:center;
+  gap:0;
+}
+
+.cd-item{
+  padding:0 clamp(18px,4vw,55px);
+  text-align:center;
+}
+
+.cd-item + .cd-item{border-left:1px solid rgba(241,240,232,.22)}
+
+.cd-num{
+  color:var(--ivory);
+  font-family:var(--font-serif);
+  font-size:clamp(3.2rem,6vw,5.6rem);
+  font-weight:400;
+  line-height:.86;
+  letter-spacing:-.055em;
+}
+
+.cd-unit{
+  margin-top:15px;
+  color:rgba(241,240,232,.65);
+  font-size:9px;
+  font-weight:500;
+  letter-spacing:.18em;
+  text-transform:uppercase;
+}
+
+/* Seções claras */
+.sec,
+.gifts-wrap{
+  width:min(100%,1280px);
+  margin:0 auto;
+  padding:clamp(84px,11vw,150px) clamp(24px,7vw,96px);
+}
+
+.sec-head{
+  margin-bottom:clamp(52px,7vw,82px);
+  text-align:center;
+}
+
+.sec-tag{
+  color:var(--taupe);
+  font-size:10px;
+  font-weight:500;
+  letter-spacing:.19em;
+  text-transform:uppercase;
+}
+
+.sec-title,
+.spotify-title,
+.panel h2,
+.modal h3{
+  color:var(--ink);
+  font-family:var(--font-serif);
+  font-weight:400;
+  letter-spacing:-.05em;
+}
+
+.sec-title{
+  margin-top:12px;
+  font-size:clamp(3rem,6vw,5.7rem);
+  line-height:.86;
+  text-transform:uppercase;
+}
+
+/* Informações do evento */
+.info-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:0;
+}
+
+.info-card{
+  min-height:190px;
+  padding:12px clamp(20px,3.6vw,54px);
+  background:transparent;
+  border:0;
+  border-radius:0;
+  box-shadow:none;
+  text-align:center;
+  transition:none;
+}
+
+.info-card + .info-card{border-left:1px solid var(--line)}
+
+.info-card:hover{
+  transform:none;
+  box-shadow:none;
+}
+
+.info-card > div:first-child{
+  margin-bottom:16px;
+  filter:grayscale(1);
+  opacity:.8;
+}
+
+.info-card h2,
+.info-card h3{
+  margin:0 0 10px;
+  color:var(--ink);
+  font-family:var(--font-serif);
+  font-size:clamp(1.25rem,2vw,1.7rem);
+  font-weight:400;
+  letter-spacing:-.035em;
+  line-height:1;
+}
+
+.info-card p{
+  margin:0;
+  color:var(--body-text);
+  font-size:12px;
+  line-height:1.65;
+}
+
+.info-detail{
+  margin-top:12px;
+  color:var(--taupe);
+  font-size:9px;
+  font-weight:500;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+}
+
+.map-wrap{
+  margin-top:64px;
+  overflow:hidden;
+  border:1px solid var(--line);
+  border-radius:0;
+  box-shadow:none;
+}
+
+.map-wrap iframe{
+  display:block;
+  width:100%;
+  height:440px;
+  border:0;
+  filter:grayscale(1) contrast(.85);
+}
+
+/* Playlist */
+.spotify-sec{
+  padding:clamp(84px,11vw,145px) 24px;
+  background:var(--ink);
+  color:var(--ivory);
+  text-align:center;
+}
+
+.spotify-inner{
+  width:min(100%,760px);
+  margin:0 auto;
+}
+
+.spotify-title{
+  margin-bottom:38px;
+  color:var(--ivory);
+  font-size:clamp(2.8rem,5vw,4.8rem);
+  line-height:.88;
+  text-transform:uppercase;
+}
+
+.spotify-wrap{
+  overflow:hidden;
+  border:1px solid rgba(241,240,232,.26);
+  border-radius:0;
+  box-shadow:none;
+}
+
+.spotify-wrap iframe{
+  display:block;
+  width:100%;
+  border:0;
+  border-radius:0;
+}
+
+/* RSVP */
+.rsvp-bg{
+  padding:clamp(84px,11vw,150px) 24px;
+  background:var(--beige);
+  border-top:1px solid var(--line);
+  border-bottom:1px solid var(--line);
+}
+
+.rsvp-inner{
+  width:min(100%,650px);
+  margin:0 auto;
+}
+
+.rsvp-box{
+  padding:clamp(30px,5vw,58px);
+  background:rgba(248,247,241,.36);
+  border:1px solid var(--line);
+  border-radius:0;
+  box-shadow:none;
+}
+
+.btn-main{
+  width:100%;
+  padding:15px 18px;
+  background:var(--ink);
+  color:var(--ivory);
+}
+
+.btn-main:hover,
+.btn-res:hover:not([disabled]),
+.btn-csv:hover,
+.fbtn:hover,
+.buse:hover{
+  background:transparent;
+  color:var(--ink);
+}
+
+.rsvp-row{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+  padding:14px 0;
+  border-bottom:1px solid var(--line);
+  font-size:12px;
+}
+
+.tag-y,
+.tag-n{
+  flex-shrink:0;
+  font-size:9px;
+  font-weight:500;
+  letter-spacing:.13em;
+  text-transform:uppercase;
+}
+
+.tag-y{color:var(--ink)}
+.tag-n{color:var(--taupe)}
+
+.csv-row{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-top:18px;
+}
+
+.btn-csv{
+  flex:1;
+  min-width:180px;
+  padding:13px 16px;
+  background:var(--ink);
+  color:var(--ivory);
+}
+
+/* Lista de presentes */
+.filter-panel{
+  margin-bottom:42px;
+  padding:26px 0;
+  background:transparent;
+  border-top:1px solid var(--line);
+  border-bottom:1px solid var(--line);
+  border-radius:0;
+  box-shadow:none;
+}
+
+.filter-row{
+  display:flex;
+  align-items:flex-start;
+  gap:22px;
+  margin-bottom:24px;
+}
+
+.filter-row:last-child{margin-bottom:0}
+
+.filter-row-controls{
+  padding-top:24px;
+  border-top:1px solid var(--line);
+}
+
+.filter-label{
+  min-width:max-content;
+  padding-top:7px;
+}
+
+.filter-group{
+  display:flex;
+  flex:1;
+  flex-direction:column;
+  min-width:160px;
+}
+
+.fbar{
+  display:flex;
+  flex-wrap:wrap;
+  gap:7px;
+}
+
+.filt{
+  padding:8px 12px;
+  border:1px solid var(--line);
+  border-radius:0;
+  color:var(--body-text);
+  font-size:9px;
+  font-weight:500;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  transition:background var(--t),color var(--t),border-color var(--t);
+}
+
+.filt.on,
+.filt:hover{
+  border-color:var(--ink);
+  background:var(--ink);
+  color:var(--ivory);
+}
+
+.price-filter-wrap{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+
+.price-slider{
+  width:100%;
+  height:1px;
+  padding:0;
+  border:0;
+  appearance:none;
+  -webkit-appearance:none;
+  outline:0;
+  background:linear-gradient(to right,var(--ink) 0%,var(--ink) var(--pct,100%),var(--line) var(--pct,100%),var(--line) 100%);
+}
+
+.price-slider::-webkit-slider-thumb{
+  width:11px;
+  height:11px;
+  border:1px solid var(--ivory);
+  border-radius:50%;
+  appearance:none;
+  -webkit-appearance:none;
+  background:var(--ink);
+  cursor:pointer;
+}
+
+.price-slider::-moz-range-thumb{
+  width:11px;
+  height:11px;
+  border:1px solid var(--ivory);
+  border-radius:50%;
+  background:var(--ink);
+  cursor:pointer;
+}
+
+.price-labels,
+.filter-results{
+  color:var(--taupe);
+  font-size:10px;
+  letter-spacing:.04em;
+}
+
+.price-labels{
+  display:flex;
+  justify-content:space-between;
+}
+
+.sort-select{
+  padding:9px 10px;
+  border:1px solid var(--line);
+  border-radius:0;
+  background:transparent;
+  color:var(--ink);
+  font-size:11px;
+  cursor:pointer;
+}
+
+.ggrid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(245px,1fr));
+  gap:18px;
+}
+
+.empty{
+  grid-column:1/-1;
+  padding:80px 24px;
+  color:var(--taupe);
+  font-size:12px;
+  text-align:center;
+}
+
+/* Cards de presentes */
+.gcard{
+  position:relative;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+  background:var(--paper);
+  border:1px solid var(--line);
+  border-radius:0;
+  box-shadow:none;
+  transition:border-color var(--t),opacity var(--t);
+}
+
+.gcard:hover{
+  transform:none;
+  border-color:var(--ink);
+  box-shadow:none;
+}
+
+.gcard.done{opacity:.48}
+
+.gimg-wrap{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:100%;
+  height:250px;
+  padding:20px;
+  overflow:hidden;
+  background:#F4F2EB;
+  border-bottom:1px solid var(--line);
+}
+
+.gimg-wrap img{
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  background:transparent;
+  filter:grayscale(1) contrast(.9);
+}
+
+.gbadge{
+  position:absolute;
+  top:12px;
+  left:12px;
+  padding:5px 8px;
+  border-radius:0;
+  background:var(--ink);
+  color:var(--ivory);
+  font-size:8px;
+  font-weight:500;
+  letter-spacing:.13em;
+  text-transform:uppercase;
+}
+
+.b-q{background:var(--ink);color:var(--ivory)}
+.b-u{background:var(--ivory);color:var(--ink);border:1px solid var(--ink)}
+.b-d{background:var(--beige);color:var(--ink)}
+
+.gbody{
+  display:flex;
+  flex:1;
+  flex-direction:column;
+  gap:8px;
+  padding:22px;
+}
+
+.gcat{
+  color:var(--taupe);
+  font-size:9px;
+  font-weight:500;
+  letter-spacing:.16em;
+  text-transform:uppercase;
+}
+
+.gtitle{
+  color:var(--ink);
+  font-family:var(--font-serif);
+  font-size:1.55rem;
+  font-weight:400;
+  letter-spacing:-.04em;
+  line-height:1.02;
+}
+
+.gdesc{
+  flex:1;
+  margin-bottom:7px;
+  color:var(--body-text);
+  font-size:11px;
+  line-height:1.65;
+}
+
+.gprice{
+  color:var(--ink);
+  font-size:12px;
+  font-weight:600;
+  letter-spacing:.04em;
+}
+
+.qinfo{
+  color:var(--taupe);
+  font-size:10px;
+}
+
+.qbar{
+  height:1px;
+  margin:5px 0 12px;
+  overflow:hidden;
+  border-radius:0;
+  background:var(--line);
+}
+
+.qfill{height:100%;background:var(--ink)}
+
+.glinks{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  margin-bottom:8px;
+}
+
+.glink{
+  display:flex;
+  align-items:center;
+  width:100%;
+  gap:6px;
+  padding:10px;
+  border:1px solid var(--line);
+  border-radius:0;
+  color:var(--ink);
+  font-size:10px;
+  text-align:left;
+}
+
+.glink:hover{
+  border-color:var(--ink);
+  background:rgba(0,0,0,.025);
+}
+
+.btn-res,
+.btn-q{
+  width:100%;
+  margin-top:auto;
+  padding:12px 14px;
+}
+
+.btn-res{
+  background:var(--ink);
+  color:var(--ivory);
+}
+
+.btn-q{
+  background:transparent;
+  color:var(--ink);
+}
+
+.btn-q:hover:not([disabled]){
+  background:var(--ink);
+  color:var(--ivory);
+}
+
+.btn-res[disabled],
+.btn-q[disabled]{
+  border-color:var(--line);
+  background:var(--beige);
+  color:var(--taupe);
+  cursor:not-allowed;
+}
+
+/* Rodapé */
+footer{
+  padding:66px 24px;
+  background:var(--ink);
+  border-top:1px solid rgba(241,240,232,.2);
+  color:var(--ivory);
+  text-align:center;
+}
+
+.fn{
+  margin-bottom:10px;
+  color:var(--ivory);
+  font-family:var(--font-serif);
+  font-size:clamp(2rem,4vw,3.2rem);
+  font-weight:400;
+  letter-spacing:-.05em;
+}
+
+footer small{
+  color:rgba(241,240,232,.6);
+  font-size:9px;
+  letter-spacing:.16em;
+  text-transform:uppercase;
+}
+
+/* Painéis, modais e área administrativa */
+.ov,
+.modal-ov{
+  position:fixed;
+  inset:0;
+  z-index:200;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:24px;
+  overflow-y:auto;
+  background:rgba(0,0,0,.78);
+  backdrop-filter:blur(3px);
+  -webkit-backdrop-filter:blur(3px);
+}
+
+.modal-ov{z-index:300}
+.ov.open,.modal-ov.open{display:flex}
+
+.panel,
+.modal{
+  position:relative;
+  width:100%;
+  margin:auto;
+  padding:clamp(28px,5vw,52px);
+  background:var(--ivory);
+  border:1px solid var(--line);
+  border-radius:0;
+  box-shadow:none;
+}
+
+.panel{max-width:560px}
+.modal{max-width:460px}
+
+.panel h2,
+.modal h3{
+  margin:0 0 24px;
+  font-size:clamp(2rem,4vw,3.2rem);
+  line-height:.9;
+}
+
+.x{
+  position:absolute;
+  top:15px;
+  right:18px;
+  color:var(--taupe);
+  font-size:1.65rem;
+  line-height:1;
+  transition:color var(--t);
+}
+
+.x:hover{color:var(--ink)}
+
+.tabs{
+  display:flex;
+  margin-bottom:26px;
+  border-bottom:1px solid var(--line);
+}
+
+.tab{
+  margin-bottom:-1px;
+  padding:10px 12px;
+  border-bottom:1px solid transparent;
+  color:var(--taupe);
+  font-size:9px;
+  font-weight:500;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+}
+
+.tab.on{
+  border-bottom-color:var(--ink);
+  color:var(--ink);
+}
+
+.radrow{
+  display:flex;
+  flex-wrap:wrap;
+  gap:16px;
+  margin-bottom:18px;
+}
+
+.ro{
+  display:flex;
+  align-items:center;
+  gap:7px;
+  margin:0;
+  color:var(--body-text);
+  font-size:12px;
+  font-weight:400;
+  letter-spacing:0;
+  text-transform:none;
+}
+
+.ro input{
+  width:auto;
+  accent-color:var(--ink);
+}
+
+.ai{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding:12px 0;
+  border-bottom:1px solid var(--line);
+  font-size:12px;
+}
+
+.bdel{
+  padding:7px 10px;
+  border:1px solid var(--ink);
+  border-radius:0;
+  color:var(--ink);
+  font-size:9px;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+}
+
+.bdel:hover{background:var(--ink);color:var(--ivory)}
+
+.cond{display:none}
+.cond.v{display:block}
+
+.modal-img{
+  width:100%;
+  height:230px;
+  margin-bottom:18px;
+  padding:15px;
+  border:1px solid var(--line);
+  border-radius:0;
+  background:var(--paper);
+  object-fit:contain;
+  filter:grayscale(1);
+}
+
+.qty-row{
+  display:flex;
+  align-items:center;
+  gap:16px;
+  margin-bottom:18px;
+}
+
+.qbtn{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:32px;
+  height:32px;
+  border:1px solid var(--ink);
+  border-radius:0;
+  background:var(--ink);
+  color:var(--ivory);
+  font-size:1.15rem;
+}
+
+.qbtn:hover{background:transparent;color:var(--ink)}
+
+.qval{
+  min-width:2rem;
+  color:var(--ink);
+  font-family:var(--font-serif);
+  font-size:1.7rem;
+  text-align:center;
+}
+
+/* Upload e pré-visualizações */
+.upload-zone{
+  margin-bottom:10px;
+  padding:18px;
+  border:1px dashed var(--taupe);
+  border-radius:0;
+  background:transparent;
+}
+
+.frow{
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+.frow input{margin:0}
+
+.fbtn,
+.buse{
+  padding:10px 12px;
+  background:var(--ink);
+  color:var(--ivory);
+}
+
+.pbox{
+  display:none;
+  align-items:center;
+  gap:12px;
+  margin-top:10px;
+  padding:12px;
+  background:var(--beige);
+  border:1px solid var(--line);
+  border-radius:0;
+}
+
+.pbox.v{display:flex}
+
+.pimg{
+  width:48px;
+  height:48px;
+  border-radius:0;
+  background:var(--paper);
+  object-fit:contain;
+}
+
+.pinfo{flex:1;min-width:0}
+
+.ptit{
+  overflow:hidden;
+  color:var(--ink);
+  font-size:12px;
+  font-weight:600;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.pprc{
+  margin-top:2px;
+  color:var(--body-text);
+  font-size:11px;
+  font-weight:500;
+}
+
+.ferr{
+  display:none;
+  margin-top:7px;
+  color:var(--ink);
+  font-size:11px;
+  font-weight:600;
+}
+
+.ferr.v{display:block}
+
+.prev-img-wrap{
+  position:relative;
+  display:none;
+  width:fit-content;
+  margin-bottom:12px;
+}
+
+.prev-img-wrap img{
+  max-width:220px;
+  height:100px;
+  border:1px solid var(--line);
+  border-radius:0;
+  object-fit:contain;
+}
+
+.prev-img-x{
+  position:absolute;
+  top:-8px;
+  right:-8px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:22px;
+  height:22px;
+  border:1px solid var(--ivory);
+  border-radius:0;
+  background:var(--ink);
+  color:var(--ivory);
+  font-size:12px;
+}
+
+.or-divider{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  margin:15px 0;
+}
+
+.or-divider span{
+  color:var(--taupe);
+  font-size:9px;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  white-space:nowrap;
+}
+
+.or-divider::before,
+.or-divider::after{
+  content:'';
+  flex:1;
+  height:1px;
+  background:var(--line);
+}
+
+.hdivider{
+  margin:16px 0;
+  border:0;
+  border-top:1px solid var(--line);
+}
+
+/* Feedback e carregamento */
+.toast{
+  position:fixed;
+  right:24px;
+  bottom:24px;
+  z-index:1000;
+  max-width:min(360px,calc(100vw - 48px));
+  padding:14px 16px;
+  border:1px solid rgba(241,240,232,.5);
+  background:var(--ink);
+  color:var(--ivory);
+  font-size:10px;
+  font-weight:500;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+  opacity:0;
+  pointer-events:none;
+  transform:translateY(10px);
+  transition:opacity var(--t),transform var(--t);
+}
+
+.toast.on{
+  opacity:1;
+  transform:translateY(0);
+}
+
+.db-loading{
+  position:fixed;
+  inset:0;
+  z-index:500;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:18px;
+  background:var(--ink);
+  color:var(--ivory);
+  font-size:10px;
+  letter-spacing:.18em;
+  text-transform:uppercase;
+}
+
+.db-loading.done{display:none !important}
+
+.spinner{
+  width:30px;
+  height:30px;
+  border:1px solid rgba(241,240,232,.25);
+  border-top-color:var(--ivory);
+  border-radius:50%;
+  animation:spin 1s linear infinite;
+}
+
+@keyframes spin{to{transform:rotate(360deg)}}
+
+@media (max-width:860px){
+  nav{
+    height:62px;
+    padding:0 20px;
+  }
+
+  .nav-links{display:none}
+  .hamburger{display:flex}
+  .mobile-menu{top:62px}
+
+  .info-grid{grid-template-columns:1fr}
+  .info-card + .info-card{
+    margin-top:34px;
+    padding-top:34px;
+    border-top:1px solid var(--line);
+    border-left:0;
+  }
+
+  .filter-row{flex-wrap:wrap}
+  .filter-label{width:100%}
+  .filter-row-controls .filter-group{min-width:210px}
+}
+
+@media (max-width:640px){
+  body{font-size:13px}
+
+  .hero{
+    min-height:680px;
+    padding:110px 28px 68px;
+  }
+
+  .hero h1{
+    font-size:clamp(3.8rem,18vw,5.8rem);
+    line-height:.84;
+  }
+
+  .hero-tag,
+  .hero p{
+    position:relative !important;
+    right:auto;
+    bottom:auto;
+    left:auto;
+    max-width:310px;
+    text-align:center;
+  }
+
+  .hero-tag{
+    order:2;
+    margin-top:28px;
+    font-size:9px;
+  }
+
+  .hero p{
+    order:3;
+    margin-top:14px;
+    font-size:10px;
+  }
+
+  .cd-grid{grid-template-columns:repeat(2,minmax(100px,1fr))}
+  .cd-item{padding:20px}
+  .cd-item + .cd-item{border-left:0}
+  .cd-item:nth-child(even){border-left:1px solid rgba(241,240,232,.22)}
+  .cd-item:nth-child(n+3){border-top:1px solid rgba(241,240,232,.22)}
+
+  .sec,
+  .gifts-wrap{
+    padding:78px 24px;
+  }
+
+  .rsvp-bg{padding:78px 24px}
+  .rsvp-box{padding:28px 20px}
+
+  .ggrid{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:12px;
+  }
+
+  .gimg-wrap{
+    height:165px;
+    padding:12px;
+  }
+
+  .gbody{padding:16px}
+  .gtitle{font-size:1.3rem}
+
+  .panel,
+  .modal{
+    margin:0;
+    padding:30px 22px;
+  }
+
+  .ov,
+  .modal-ov{
+    align-items:flex-end;
+    padding:0;
+  }
+
+  .panel,
+  .modal{max-width:100%}
+
+  .map-wrap iframe{height:300px}
+  .spotify-wrap iframe{height:250px}
+
+  .csv-row{flex-direction:column}
+}
+</style>
 
 <script>
 // =====================================================================
